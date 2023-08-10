@@ -1,0 +1,57 @@
+@Grab('org.codehaus.groovy.modules.http-builder:http-builder:0.7.1')
+import groovyx.net.http.RESTClient
+import groovyx.net.http.Method
+import groovy.util.XmlSlurper
+
+// ServiceNow API credentials
+def serviceNowUsername = 'your_serviceNow_username'
+def serviceNowPassword = 'your_serviceNow_password'
+def serviceNowInstance = 'your_instance.service-now.com'
+
+// GitHub file details
+def gitHubOwner = 'YourGitHubUsername'
+def gitHubRepo = 'YourRepoName'
+def gitHubFilePath = 'path/to/your/file.xml'
+def gitHubApiUrl = "https://api.github.com/repos/$gitHubOwner/$gitHubRepo/contents/$gitHubFilePath"
+
+// ServiceNow Change Management API endpoint
+def createChangeUrl = "https://$serviceNowInstance/api/sn_chg_rest/change/standard"
+
+// Fetch XML file from GitHub
+def gitHubClient = new RESTClient(gitHubApiUrl)
+def gitHubResponse = gitHubClient.get(contentType: 'APPLICATION_JSON')
+
+if (gitHubResponse.status == 200) {
+    def xmlContent = gitHubResponse.data.content.decodeBase64().toString('UTF-8')
+    
+    def xmlSlurper = new XmlSlurper()
+    def xml = xmlSlurper.parseText(xmlContent)
+    
+    // Extract data from the XML
+    def changeTitle = xml.title.text()
+    def changeDescription = xml.description.text()
+    def changeType = xml.changeType.text()
+    
+    // Create Change Management request in ServiceNow
+    def client = new RESTClient()
+    client.auth.basic(serviceNowUsername, serviceNowPassword)
+    def changeRequestBody = [
+        short_description: changeTitle,
+        description: changeDescription,
+        type: changeType
+        // Add other required fields here
+    ]
+    
+    client.request(Method.POST, createChangeUrl) {
+        contentType 'application/json'
+        body(changeRequestBody)
+        response.success = { resp, json ->
+            println "Change Management request created: ${json.result.number}"
+        }
+        response.failure = { resp ->
+            println "Failed to create Change Management request: ${resp.statusLine}"
+        }
+    }
+} else {
+    println "Failed to fetch XML file from GitHub: ${gitHubResponse.status} - ${gitHubResponse.data?.message}"
+}
