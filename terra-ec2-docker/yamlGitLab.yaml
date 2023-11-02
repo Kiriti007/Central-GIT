@@ -1,41 +1,50 @@
 stages:
-  - terraform
-  - build_docker
-  - deploy
+  - init
+  - validate
+  - plan
+  - apply
 
 variables:
-  TF_WORKING_DIR: "terraform_directory" # Update to your Terraform directory name
+  TF_WORKING_DIR: "emea-terraform-aws/Terra-ec2-docker"
+  TF_PLAN_FILE: "myplan"
+  TERRAFORM_VERSION: "1.1.0"
+  AWS_ACCESS_KEY_ID: "ASIAXFBC2EFTS4MZTEDP"  # Update with your AWS access key
+  AWS_SECRET_ACCESS_KEY: "ehMTL6AjpCbb7ClI/s/BLLkuh3sfAcKv8okmdnAw"  # Update with your AWS secret key
 
-# Define your Terraform environment variables as GitLab CI/CD variables
-variables:
-  AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
-  AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+before_script:
+  - apt-get update -qy
+  - apt-get install -y unzip
+  - wget https://releases.hashicorp.com/terraform/$TERRAFORM_VERSION/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+  - unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+  - mv terraform /usr/local/bin/
+  - rm -rf terraform_${TERRAFORM_VERSION}_linux_amd64.zip
 
-# Configure stages
-terraform:
-  stage: terraform
+init:
+  stage: init
   script:
     - cd $TF_WORKING_DIR
     - terraform init
+
+validate:
+  stage: validate
+  script:
+    - cd $TF_WORKING_DIR
     - terraform validate
-    - terraform plan -out=terraform.plan
-  only:
-    - branches
 
-build_docker:
-  stage: build_docker
+plan:
+  stage: plan
   script:
-    - cd docker
-    - docker build -t my-docker-image -f Dockerfile .
-  only:
-    - branches
+    - cd $TF_WORKING_DIR
+    - export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+    - export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+    - terraform init
+    - terraform plan -out=$TF_PLAN_FILE
 
-deploy:
-  stage: deploy
+apply:
+  stage: apply
   script:
-    - cd docker
-    - docker tag my-docker-image my-gitlab-registry-url/my-docker-image:latest
-    - docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
-    - docker push my-gitlab-registry-url/my-docker-image:latest
-  only:
-    - branches
+    - cd $TF_WORKING_DIR
+    - export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+    - export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+    - terraform init
+    - terraform apply -auto-approve $TF_PLAN_FILE

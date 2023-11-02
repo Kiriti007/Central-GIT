@@ -1,31 +1,43 @@
 variable "aws_region" {
   description = "AWS region where the EC2 instance will be created."
   type        = string
-  default     = "us-east-1" # Change this to your desired AWS region
+  default     = "eu-central-1"
+}
+
+variable "aws_SG_id" {
+  description = "AWS region security group."
+  type        = string
+  default     = "sg-0c7e7663503816ccc"
+}
+
+variable "aws_Subnet_id" {
+  description = "AWS region subnet for frankfurt."
+  type        = string
+  default     = "subnet-00e73b0d2f3f466df"
 }
 
 variable "ec2_ami" {
   description = "ID of the Amazon Machine Image (AMI) to use for the EC2 instance."
   type        = string
-  default     = "ami-0dbc3d7bc646e8516" # Update with your desired AMI
+  default     = "ami-0bfea2bc923c0fd12" 
 }
 
 variable "ec2_instance_type" {
   description = "The type of EC2 instance to launch."
   type        = string
-  default     = "t2.micro" # Change this to your desired instance type
+  default     = "t2.micro" 
 }
 
 variable "aws_access_key" {
   description = "AWS access key ID."
   type        = string
-  default     = "AKIA5XWZ6L2F2JGA33FL" # Replace with your default access key or set via environment variable
+  default     = "ASIAXFBC2EFTS4MZTEDP" 
 }
 
 variable "aws_secret_key" {
   description = "AWS secret access key."
   type        = string
-  default     = "rJBAZWXLq0HIJm1LIX39Q7gJrGzxJXSifl83Ry9P" # Replace with your default secret key or set via environment variable
+  default     = "ehMTL6AjpCbb7ClI/s/BLLkuh3sfAcKv8okmdnAw" 
 }
 
 ###################################################

@@ -24,12 +24,7 @@ resource "aws_instance" "my_instance" {
   key_name               = tls_private_key.mykey1.public_key_openssh
   vpc_security_group_ids = [var.aws_SG_id]
   subnet_id              = var.aws_Subnet_id
-  user_data = file("Script_docker.sh") 
-
-  provisioner "file" {
-    source      = "http_proxy.conf"
-    destination = "/tmp/http_proxy.conf"
-  }
+  user_data = file("script22.sh") 
 
 }
 
