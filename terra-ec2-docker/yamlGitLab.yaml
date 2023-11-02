@@ -1,0 +1,41 @@
+stages:
+  - terraform
+  - build_docker
+  - deploy
+
+variables:
+  TF_WORKING_DIR: "terraform_directory" # Update to your Terraform directory name
+
+# Define your Terraform environment variables as GitLab CI/CD variables
+variables:
+  AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+  AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+
+# Configure stages
+terraform:
+  stage: terraform
+  script:
+    - cd $TF_WORKING_DIR
+    - terraform init
+    - terraform validate
+    - terraform plan -out=terraform.plan
+  only:
+    - branches
+
+build_docker:
+  stage: build_docker
+  script:
+    - cd docker
+    - docker build -t my-docker-image -f Dockerfile .
+  only:
+    - branches
+
+deploy:
+  stage: deploy
+  script:
+    - cd docker
+    - docker tag my-docker-image my-gitlab-registry-url/my-docker-image:latest
+    - docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker push my-gitlab-registry-url/my-docker-image:latest
+  only:
+    - branches
